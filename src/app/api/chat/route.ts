@@ -67,19 +67,23 @@ Remember: You are autonomous. If you see a bug, fix it. If you see an improvemen
           path: z.string().describe('Path starting with /'),
           content: z.string().describe('Full file content'),
         }),
-        execute: async ({ path }) => ({ success: true, path }),
       }),
       delete_file: tool({
         description: 'Delete a file.',
         parameters: z.object({
           path: z.string().describe('Path starting with /'),
         }),
-        execute: async ({ path }) => ({ success: true, path }),
+      }),
+      rename_file: tool({
+        description: 'Rename or move a file.',
+        parameters: z.object({
+          oldPath: z.string().describe('Source path'),
+          newPath: z.string().describe('Target path'),
+        }),
       }),
       read_project: tool({
         description: 'Get full context of all files in the project.',
         parameters: z.object({}),
-        execute: async () => ({ success: true }),
       }),
     },
   });

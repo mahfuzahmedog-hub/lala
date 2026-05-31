@@ -45,7 +45,7 @@ export const createSettingsSlice: StateCreator<SettingsSlice> = (set) => ({
     google: "",
     mistral: "",
   },
-  selectedModelId: "gemini-2.0-flash-exp",
+  selectedModelId: "gemini-1.5-pro-latest",
   selectedProvider: "google",
   github: {
     token: "",

@@ -1,0 +1,25 @@
+
+> tmp-app@0.1.0 dev
+> next dev
+
+   ▲ Next.js 15.1.0
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.0.2:3000
+
+ ✓ Starting...
+ ✓ Ready in 1933ms
+ ○ Compiling / ...
+ ✓ Compiled / in 19.4s (2580 modules)
+ GET / 200 in 21096ms
+ ○ Compiling /landing ...
+ ✓ Compiled /landing in 6.9s (2590 modules)
+ GET / 200 in 362ms
+ GET /landing 200 in 7274ms
+ ○ Compiling /auth ...
+ ✓ Compiled /auth in 778ms (2591 modules)
+ GET /auth 200 in 975ms
+ GET / 200 in 612ms
+ ✓ Compiled in 1477ms (1260 modules)
+ ✓ Compiled in 1038ms (2578 modules)
+ ✓ Compiled in 706ms (1260 modules)
+ ✓ Compiled in 836ms (1260 modules)
