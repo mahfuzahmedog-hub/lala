@@ -12,10 +12,15 @@ export interface ProjectFile {
 interface ProjectState {
   files: Record<string, string>;
   activeFile: string;
+  errors: string[];
+  lastMaintenance: number;
   setFiles: (files: Record<string, string>) => void;
   updateFile: (path: string, content: string) => void;
   deleteFile: (path: string) => void;
   setActiveFile: (path: string) => void;
+  setErrors: (errors: string[]) => void;
+  addError: (error: string) => void;
+  setLastMaintenance: (time: number) => void;
   resetProject: () => void;
 }
 
@@ -56,6 +61,8 @@ export const useProjectStore = create<ProjectState>()(
     (set) => ({
       files: initialFiles,
       activeFile: "/App.tsx",
+      errors: [],
+      lastMaintenance: Date.now(),
       setFiles: (files) => set({ files }),
       updateFile: (path, content) =>
         set((state) => ({
@@ -69,7 +76,10 @@ export const useProjectStore = create<ProjectState>()(
           return { files: newFiles, activeFile: newActive };
         }),
       setActiveFile: (path) => set({ activeFile: path }),
-      resetProject: () => set({ files: initialFiles, activeFile: "/App.tsx" }),
+      setErrors: (errors) => set({ errors }),
+      addError: (error) => set((state) => ({ errors: [...state.errors, error].slice(-10) })), // Keep last 10
+      setLastMaintenance: (time) => set({ lastMaintenance: time }),
+      resetProject: () => set({ files: initialFiles, activeFile: "/App.tsx", errors: [] }),
     }),
     {
       name: "vibecode-storage",

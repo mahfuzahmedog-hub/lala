@@ -1,20 +1,20 @@
 "use client";
 
 import { useChat } from "ai/react";
-import { Send, Sparkles, User, Loader2, FileCode, ChevronDown, Trash2, RotateCcw, Image as ImageIcon, X, ListChecks, FileSearch, MessageSquare, Terminal } from "lucide-react";
+import { Send, Sparkles, User, Loader2, FileCode, ChevronDown, Trash2, RotateCcw, Image as ImageIcon, X, ListChecks, FileSearch, MessageSquare, Terminal, Activity } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useProjectStore } from "@/lib/store";
 
 export function ChatSidebar() {
-  const { updateFile, deleteFile, resetProject, files } = useProjectStore();
+  const { updateFile, deleteFile, resetProject, files, errors, setErrors, lastMaintenance, setLastMaintenance } = useProjectStore();
   const [provider, setProvider] = useState("google");
   const [images, setImages] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<"chat" | "logs">("chat");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
+  const { messages, input, handleInputChange, handleSubmit, append, isLoading } = useChat({
     api: "/api/chat",
     body: { provider, images },
     onResponse: () => {
@@ -36,6 +36,34 @@ export function ChatSidebar() {
       }
     },
   });
+
+  const runSelfHealing = useCallback(async (reason: string) => {
+    const prompt = `[SELF-HEALING SYSTEM TRIGGERED]
+    Reason: ${reason}
+    Current Errors: ${errors.length > 0 ? errors.join(", ") : "None detected, performing general maintenance."}
+
+    Task: Scan the project, identify any bugs, potential improvements, or outdated code, and fix them.`;
+
+    append({
+      role: 'user',
+      content: prompt,
+    });
+    setErrors([]); // Reset errors after triggering fix
+  }, [errors, append, setErrors]);
+
+  // Check for 6-hour maintenance
+  useEffect(() => {
+    const SIX_HOURS = 6 * 60 * 60 * 1000;
+    const interval = setInterval(() => {
+      const now = Date.now();
+      if (now - lastMaintenance > SIX_HOURS) {
+        setLastMaintenance(now);
+        runSelfHealing("6-hour scheduled maintenance");
+      }
+    }, 60000); // Check every minute
+
+    return () => clearInterval(interval);
+  }, [lastMaintenance, setLastMaintenance, runSelfHealing]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -70,6 +98,13 @@ export function ChatSidebar() {
           <h1 className="font-black text-sm tracking-tighter uppercase italic">VIBE<span className="text-blue-500">AGENT</span></h1>
         </div>
         <div className="flex items-center gap-2">
+          <button
+             onClick={() => runSelfHealing("Manual health check")}
+             className="p-1.5 text-green-500 hover:bg-green-500/10 rounded transition-all"
+             title="Run Health Check"
+          >
+            <Activity size={14} />
+          </button>
           <button
             onClick={() => {
               if (confirm("Reset agent memory and project?")) {
@@ -124,7 +159,7 @@ export function ChatSidebar() {
                       Agentic Mode Enabled
                     </h3>
                     <p className="text-xs text-blue-300/80 leading-relaxed">
-                      I can now see images, plan complex architectures, and manage your entire codebase. Try uploading a design or describing a feature.
+                      I can now see images, plan complex architectures, and manage your entire codebase. <b>Self-healing</b> is active and runs every 6 hours.
                     </p>
                  </div>
 
@@ -255,6 +290,15 @@ export function ChatSidebar() {
                     <Loader2 size={10} className="animate-spin text-white" />
                     <span className="text-[9px] font-bold text-white uppercase tracking-widest">Agent Thinking</span>
                  </div>
+               )}
+               {errors.length > 0 && (
+                 <button
+                    onClick={() => runSelfHealing("Console errors detected")}
+                    className="flex items-center gap-2 px-3 py-1 bg-red-600 rounded-full shadow-lg shadow-red-600/20 animate-bounce"
+                 >
+                    <Activity size={10} className="text-white" />
+                    <span className="text-[9px] font-bold text-white uppercase tracking-widest">Fix {errors.length} Errors</span>
+                 </button>
                )}
             </div>
 
