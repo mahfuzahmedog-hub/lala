@@ -15,7 +15,7 @@ export function EditorContainer() {
     <div className="flex flex-col h-full">
       {/* File Tabs */}
       <div className="h-9 border-b border-[#1a1a1a] flex items-center bg-[#0a0a0a] px-2 overflow-x-auto no-scrollbar">
-        {Object.keys(files).map((path) => (
+        {Object.keys(files).filter(path => !path.endsWith('.css')).map((path) => (
           <button
             key={path}
             onClick={() => setActiveFile(path)}
