@@ -1,16 +1,19 @@
-import { google } from "@ai-sdk/google";
-import { anthropic } from "@ai-sdk/anthropic";
 import { streamText, tool, CoreMessage } from "ai";
 import { z } from "zod";
+import { getModel, AIProvider } from "@/lib/ai/providers";
 
 export const maxDuration = 60;
 
 export async function POST(req: Request) {
-  const { messages, provider = "google", images = [] } = await req.json();
+  const {
+    messages,
+    provider = "google",
+    modelId = "gemini-1.5-pro-latest",
+    apiKey,
+    images = []
+  } = await req.json();
 
-  const model = (provider === "anthropic"
-    ? anthropic("claude-3-5-sonnet-20240620")
-    : google("gemini-1.5-pro-latest")) as any;
+  const model = getModel(provider as AIProvider, modelId, apiKey) as any;
 
   // Process multi-modal messages for the last user message
   const processedMessages: CoreMessage[] = messages.map((m: any, idx: number) => {

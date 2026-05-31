@@ -11,6 +11,8 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.81",
     "@ai-sdk/google": "^3.0.80",
+    "@ai-sdk/mistral": "^3.0.37",
+    "@ai-sdk/openai": "^3.0.67",
     "@codesandbox/sandpack-react": "^2.20.0",
     "@monaco-editor/react": "^4.7.0",
     "ai": "^4.1.25",

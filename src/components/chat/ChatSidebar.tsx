@@ -1,22 +1,30 @@
 "use client";
 
 import { useChat } from "ai/react";
-import { Send, Sparkles, User, Loader2, FileCode, ChevronDown, Trash2, RotateCcw, Image as ImageIcon, X, ListChecks, FileSearch, MessageSquare, Terminal, Activity } from "lucide-react";
+import { Send, Sparkles, User, Loader2, FileCode, ChevronDown, Trash2, RotateCcw, Image as ImageIcon, X, ListChecks, FileSearch, MessageSquare, Terminal, Activity, BrainCircuit } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useProjectStore } from "@/lib/store";
+import { useSettingsStore } from "@/lib/settings-store";
+import { availableModels, AIProvider } from "@/lib/ai/providers";
 
 export function ChatSidebar() {
   const { updateFile, deleteFile, resetProject, files, errors, setErrors, lastMaintenance, setLastMaintenance } = useProjectStore();
-  const [provider, setProvider] = useState("google");
+  const { selectedModelId, selectedProvider, setModel, apiKeys } = useSettingsStore();
+
   const [images, setImages] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<"chat" | "logs">("chat");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { messages, input, handleInputChange, handleSubmit, append, isLoading } = useChat({
     api: "/api/chat",
-    body: { provider, images },
+    body: {
+      provider: selectedProvider,
+      modelId: selectedModelId,
+      apiKey: apiKeys[selectedProvider],
+      images
+    },
     onResponse: () => {
       setImages([]);
     },
@@ -48,10 +56,9 @@ export function ChatSidebar() {
       role: 'user',
       content: prompt,
     });
-    setErrors([]); // Reset errors after triggering fix
+    setErrors([]);
   }, [errors, append, setErrors]);
 
-  // Check for 6-hour maintenance
   useEffect(() => {
     const SIX_HOURS = 6 * 60 * 60 * 1000;
     const interval = setInterval(() => {
@@ -60,7 +67,7 @@ export function ChatSidebar() {
         setLastMaintenance(now);
         runSelfHealing("6-hour scheduled maintenance");
       }
-    }, 60000); // Check every minute
+    }, 60000);
 
     return () => clearInterval(interval);
   }, [lastMaintenance, setLastMaintenance, runSelfHealing]);
@@ -88,6 +95,14 @@ export function ChatSidebar() {
 
   const toolLogs = messages.flatMap(m => m.toolInvocations || []);
 
+  const handleModelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const modelId = e.target.value;
+    const model = availableModels.find(m => m.id === modelId);
+    if (model) {
+      setModel(model.provider, modelId);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full bg-[#0a0a0a]">
       <div className="p-4 border-b border-[#1a1a1a] flex items-center justify-between bg-[#0a0a0a]/50 backdrop-blur-sm sticky top-0 z-20">
@@ -98,35 +113,20 @@ export function ChatSidebar() {
           <h1 className="font-black text-sm tracking-tighter uppercase italic">VIBE<span className="text-blue-500">AGENT</span></h1>
         </div>
         <div className="flex items-center gap-2">
-          <button
-             onClick={() => runSelfHealing("Manual health check")}
-             className="p-1.5 text-green-500 hover:bg-green-500/10 rounded transition-all"
-             title="Run Health Check"
-          >
-            <Activity size={14} />
-          </button>
-          <button
-            onClick={() => {
-              if (confirm("Reset agent memory and project?")) {
-                resetProject();
-                window.location.reload();
-              }
-            }}
-            className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded transition-all"
-            title="Reset Agent"
-          >
-            <RotateCcw size={14} />
-          </button>
-          <div className="relative">
-            <select
-              value={provider}
-              onChange={(e) => setProvider(e.target.value)}
-              className="appearance-none bg-[#141414] text-[10px] text-gray-400 outline-none border border-[#1a1a1a] rounded-md px-2 py-1 pr-6 cursor-pointer hover:border-gray-700 transition-colors"
-            >
-              <option value="google">Gemini 1.5 Pro</option>
-              <option value="anthropic">Claude 3.5 Sonnet</option>
-            </select>
-            <ChevronDown size={10} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-gray-600" />
+          <div className="relative group/model">
+            <div className="flex items-center gap-1.5 bg-[#141414] border border-[#1a1a1a] rounded-lg px-2 py-1 cursor-pointer hover:border-gray-600 transition-all">
+               <BrainCircuit size={12} className="text-blue-400" />
+               <select
+                value={selectedModelId}
+                onChange={handleModelChange}
+                className="appearance-none bg-transparent text-[10px] text-gray-300 outline-none cursor-pointer pr-4 font-bold"
+               >
+                 {availableModels.map(m => (
+                   <option key={m.id} value={m.id}>{m.name}</option>
+                 ))}
+               </select>
+               <ChevronDown size={10} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-gray-600" />
+            </div>
           </div>
         </div>
       </div>
@@ -159,7 +159,7 @@ export function ChatSidebar() {
                       Agentic Mode Enabled
                     </h3>
                     <p className="text-xs text-blue-300/80 leading-relaxed">
-                      I can now see images, plan complex architectures, and manage your entire codebase. <b>Self-healing</b> is active and runs every 6 hours.
+                      Using <b>{availableModels.find(m => m.id === selectedModelId)?.name}</b>. I can see images, plan architectures, and self-heal your code.
                     </p>
                  </div>
 
