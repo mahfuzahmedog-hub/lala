@@ -1,5 +1,6 @@
 "use client";
 
+import { useAppStore } from "@/lib/store";
 import { Monitor } from "lucide-react";
 import {
   SandpackProvider,
@@ -7,12 +8,20 @@ import {
   SandpackPreview,
   SandpackConsole,
 } from "@codesandbox/sandpack-react";
-import { useProjectStore } from "@/lib/store";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export function PreviewContainer() {
-  const { files } = useProjectStore();
+  const store = useAppStore();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const files = mounted ? store.files : {};
   const [activeTab, setActiveTab] = useState<"preview" | "console">("preview");
+
+  if (!mounted) return <div className="flex-1 bg-[#0a0a0a]" />;
 
   const sandpackFiles: Record<string, string> = {};
   Object.entries(files).forEach(([path, content]) => {

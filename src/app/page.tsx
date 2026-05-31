@@ -1,29 +1,44 @@
 "use client";
 
-import { useState } from "react";
+import { useAppStore } from "@/lib/store";
+import { useState, useEffect } from "react";
 import { ChatSidebar } from "@/components/chat/ChatSidebar";
 import { EditorContainer } from "@/components/editor/EditorContainer";
 import { PreviewContainer } from "@/components/preview/PreviewContainer";
 import { GitHubSettingsModal } from "@/components/GitHubSettingsModal";
 import { AISettingsModal } from "@/components/AISettingsModal";
-import { PanelLeft, PanelRight, Play, Github, Settings, Cloud, Loader2, CheckCircle2, AlertCircle, Sparkles } from "lucide-react";
+import { ProjectDashboard } from "@/components/ProjectDashboard";
+import { ShipModal } from "@/components/ShipModal";
+import { AnalyticsModal } from "@/components/AnalyticsModal";
+import { FileExplorer } from "@/components/editor/FileExplorer";
+import { PanelLeft, PanelRight, Play, Github, Settings, Cloud, Loader2, CheckCircle2, AlertCircle, Sparkles, LayoutGrid, Rocket, BarChart3 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useGitHubStore } from "@/lib/github-store";
-import { useProjectStore } from "@/lib/store";
 
 export default function Home() {
+  const store = useAppStore();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const [showPreview, setShowPreview] = useState(true);
   const [showChat, setShowChat] = useState(true);
+  const [showExplorer, setShowExplorer] = useState(true);
   const [showGitHubModal, setShowGitHubModal] = useState(false);
   const [showAIModal, setShowAIModal] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(false);
+  const [showShipModal, setShowShipModal] = useState(false);
+  const [showAnalyticsModal, setShowAnalyticsModal] = useState(false);
   const [pushStatus, setPushStatus] = useState<"idle" | "pushing" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
-  const { settings } = useGitHubStore();
-  const { files } = useProjectStore();
+  const github = mounted ? store.github : { token: "", owner: "", repo: "", branch: "main" };
+  const files = mounted ? store.files : {};
+  const projectName = mounted ? store.projectName : "...";
 
   const handlePush = async () => {
-    if (!settings.token || !settings.owner || !settings.repo) {
+    if (!github.token || !github.owner || !github.repo) {
       setShowGitHubModal(true);
       return;
     }
@@ -33,7 +48,7 @@ export default function Home() {
       const res = await fetch("/api/github/push", {
         method: "POST",
         body: JSON.stringify({
-          ...settings,
+          ...github,
           files,
           message: `VibeCode Sync: ${new Date().toLocaleString()}`,
         }),
@@ -50,6 +65,8 @@ export default function Home() {
       setTimeout(() => setPushStatus("idle"), 5000);
     }
   };
+
+  if (!mounted) return <div className="h-screen w-screen bg-[#050505]" />;
 
   return (
     <main className="flex h-screen w-screen overflow-hidden bg-[#050505] text-gray-300 font-sans selection:bg-blue-500/30 text-[13px]">
@@ -80,20 +97,37 @@ export default function Home() {
               >
                 <PanelLeft size={18} />
               </button>
+              <button
+                onClick={() => setShowDashboard(true)}
+                className="p-2 text-gray-500 hover:text-white hover:bg-[#111] rounded-xl transition-all"
+                title="Project Dashboard"
+              >
+                <LayoutGrid size={18} />
+              </button>
+              <button
+                onClick={() => setShowAnalyticsModal(true)}
+                className="p-2 text-gray-500 hover:text-emerald-400 hover:bg-[#111] rounded-xl transition-all"
+                title="Analytics"
+              >
+                <BarChart3 size={18} />
+              </button>
             </div>
 
             <div className="h-4 w-[1px] bg-[#1a1a1a]" />
 
             <div className="flex items-center gap-3 group">
               <div className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.4)] animate-pulse" />
-              <span className="text-[11px] font-bold text-gray-400 group-hover:text-gray-200 transition-colors tracking-tight">
-                {settings.repo || "my-vibe-app"}
-              </span>
+              <div className="flex flex-col">
+                <span className="text-[9px] font-black text-gray-600 uppercase tracking-widest leading-none mb-1">Environment</span>
+                <span className="text-[11px] font-black text-gray-200 group-hover:text-blue-400 transition-colors tracking-tighter uppercase italic">
+                  {projectName}
+                </span>
+              </div>
             </div>
           </div>
 
           <div className="flex items-center gap-4">
-             <div className="flex items-center bg-[#0d0d0d] rounded-xl p-1 border border-[#1a1a1a] shadow-inner">
+             <div className="flex items-center bg-[#0d0d0d] rounded-xl p-1 border border-[#1a1a1a] shadow-inner font-black">
                <button
                   onClick={handlePush}
                   disabled={pushStatus === "pushing"}
@@ -105,8 +139,11 @@ export default function Home() {
                    <Cloud size={14} className="text-gray-400" />}
                   {pushStatus === "error" ? "Error" : pushStatus === "success" ? "Synced" : "Cloud Sync"}
                </button>
-               <button className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-[11px] font-black transition-all shadow-[0_0_20px_rgba(37,99,235,0.25)] ml-1 active:scale-95 uppercase tracking-tighter">
-                  <Play size={14} fill="currentColor" />
+               <button
+                onClick={() => setShowShipModal(true)}
+                className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-[11px] transition-all shadow-[0_0_20px_rgba(37,99,235,0.25)] ml-1 active:scale-95 uppercase tracking-tighter"
+               >
+                  <Rocket size={14} />
                   Ship
                </button>
              </div>
@@ -123,7 +160,7 @@ export default function Home() {
                </button>
                <button
                 onClick={() => setShowGitHubModal(true)}
-                className={`p-2 rounded-xl transition-all ${settings.token ? "text-purple-400 bg-purple-400/5" : "text-gray-500"} hover:text-purple-300 hover:bg-purple-400/10`}
+                className={`p-2 rounded-xl transition-all ${github.token ? "text-purple-400 bg-purple-400/5" : "text-gray-500"} hover:text-purple-300 hover:bg-purple-400/10`}
                 title="GitHub Settings"
                >
                   <Github size={18} />
@@ -143,6 +180,19 @@ export default function Home() {
 
         {/* Editor & Preview Split */}
         <div className="flex-1 flex min-h-0 bg-[#050505]">
+          <AnimatePresence>
+            {showExplorer && (
+                <motion.div
+                    initial={{ width: 0, opacity: 0 }}
+                    animate={{ width: 256, opacity: 1 }}
+                    exit={{ width: 0, opacity: 0 }}
+                    transition={{ type: "spring", damping: 30, stiffness: 300 }}
+                >
+                    <FileExplorer />
+                </motion.div>
+            )}
+          </AnimatePresence>
+
           <div className="flex-1 min-w-0 flex flex-col">
             <EditorContainer />
           </div>
@@ -169,6 +219,15 @@ export default function Home() {
         )}
         {showAIModal && (
           <AISettingsModal onClose={() => setShowAIModal(false)} />
+        )}
+        {showDashboard && (
+          <ProjectDashboard onClose={() => setShowDashboard(false)} />
+        )}
+        {showShipModal && (
+          <ShipModal onClose={() => setShowShipModal(false)} />
+        )}
+        {showAnalyticsModal && (
+          <AnalyticsModal onClose={() => setShowAnalyticsModal(false)} />
         )}
       </AnimatePresence>
 
