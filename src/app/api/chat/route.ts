@@ -13,10 +13,10 @@ export async function POST(req: Request) {
     images = []
   } = await req.json();
 
-  const model = getModel(provider as AIProvider, modelId, apiKey) as any;
+  const model = getModel(provider as AIProvider, modelId, apiKey);
 
   // Process multi-modal messages for the last user message
-  const processedMessages: CoreMessage[] = messages.map((m: any, idx: number) => {
+  const processedMessages: CoreMessage[] = messages.map((m: CoreMessage, idx: number) => {
     if (m.role === 'user' && idx === messages.length - 1 && images.length > 0) {
       return {
         role: 'user',
@@ -33,7 +33,8 @@ export async function POST(req: Request) {
   });
 
   const result = await streamText({
-    model,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    model: model as any,
     messages: processedMessages,
     system: `You are VibeCode Agent, an elite AI software engineer with autonomous self-healing capabilities.
 

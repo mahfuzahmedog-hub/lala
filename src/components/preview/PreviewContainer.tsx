@@ -1,6 +1,6 @@
 "use client";
 
-import { Monitor, RefreshCw } from "lucide-react";
+import { Monitor } from "lucide-react";
 import {
   SandpackProvider,
   SandpackLayout,
@@ -8,10 +8,10 @@ import {
   SandpackConsole,
 } from "@codesandbox/sandpack-react";
 import { useProjectStore } from "@/lib/store";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 export function PreviewContainer() {
-  const { files, addError } = useProjectStore();
+  const { files } = useProjectStore();
   const [activeTab, setActiveTab] = useState<"preview" | "console">("preview");
 
   const sandpackFiles: Record<string, string> = {};

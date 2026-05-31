@@ -6,7 +6,7 @@ import { EditorContainer } from "@/components/editor/EditorContainer";
 import { PreviewContainer } from "@/components/preview/PreviewContainer";
 import { GitHubSettingsModal } from "@/components/GitHubSettingsModal";
 import { AISettingsModal } from "@/components/AISettingsModal";
-import { PanelLeft, PanelRight, Play, Share2, Github, Settings, Cloud, Loader2, CheckCircle2, AlertCircle, Sparkles } from "lucide-react";
+import { PanelLeft, PanelRight, Play, Github, Settings, Cloud, Loader2, CheckCircle2, AlertCircle, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGitHubStore } from "@/lib/github-store";
 import { useProjectStore } from "@/lib/store";
@@ -44,9 +44,9 @@ export default function Home() {
 
       setPushStatus("success");
       setTimeout(() => setPushStatus("idle"), 3000);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setPushStatus("error");
-      setErrorMessage(err.message);
+      setErrorMessage(err instanceof Error ? err.message : "An unknown error occurred");
       setTimeout(() => setPushStatus("idle"), 5000);
     }
   };

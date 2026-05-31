@@ -1,16 +1,17 @@
 "use client";
 
-import { useChat } from "ai/react";
-import { Send, Sparkles, User, Loader2, FileCode, ChevronDown, Trash2, RotateCcw, Image as ImageIcon, X, ListChecks, FileSearch, MessageSquare, Terminal, Activity, BrainCircuit } from "lucide-react";
+import { useChat } from "@ai-sdk/react";
+import { Send, Sparkles, Loader2, FileCode, ChevronDown, Trash2, Image as ImageIcon, X, FileSearch, MessageSquare, Terminal, Activity, BrainCircuit } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useProjectStore } from "@/lib/store";
 import { useSettingsStore } from "@/lib/settings-store";
-import { availableModels, AIProvider } from "@/lib/ai/providers";
+import { availableModels } from "@/lib/ai/providers";
+import Image from "next/image";
 
 export function ChatSidebar() {
-  const { updateFile, deleteFile, resetProject, files, errors, setErrors, lastMaintenance, setLastMaintenance } = useProjectStore();
+  const { updateFile, deleteFile, files, errors, setErrors, lastMaintenance, setLastMaintenance } = useProjectStore();
   const { selectedModelId, selectedProvider, setModel, apiKeys } = useSettingsStore();
 
   const [images, setImages] = useState<string[]>([]);
@@ -174,7 +175,7 @@ export function ChatSidebar() {
                       ].map((suggest) => (
                         <button
                           key={suggest}
-                          onClick={() => handleInputChange({ target: { value: suggest } } as any)}
+                          onClick={() => handleInputChange({ target: { value: suggest } } as unknown as React.ChangeEvent<HTMLTextAreaElement>)}
                           className="text-left p-3 rounded-xl border border-[#1a1a1a] text-[11px] text-gray-400 hover:bg-[#111] hover:text-white hover:border-gray-700 transition-all group active:scale-[0.98]"
                         >
                           <span className="opacity-50 group-hover:opacity-100 mr-2">/</span>
@@ -271,7 +272,7 @@ export function ChatSidebar() {
             <div className="flex gap-2 flex-wrap bg-[#111] p-2 rounded-2xl border border-[#1a1a1a] shadow-2xl">
               {images.map((img, i) => (
                 <div key={i} className="relative group">
-                  <img src={img} className="w-16 h-16 object-cover rounded-xl border border-[#222]" alt="Upload preview" />
+                  <Image src={img} width={64} height={64} className="w-16 h-16 object-cover rounded-xl border border-[#222]" alt="Upload preview" />
                   <button
                     onClick={() => setImages(images.filter((_, idx) => idx !== i))}
                     className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 shadow-lg hover:bg-red-500 transition-colors"
@@ -311,7 +312,7 @@ export function ChatSidebar() {
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
-                  handleSubmit(e as any);
+                  handleSubmit(e as unknown as React.FormEvent<HTMLFormElement>);
                 }
               }}
             />

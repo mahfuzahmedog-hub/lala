@@ -49,9 +49,10 @@ export function GitHubSettingsModal({ onClose }: { onClose: () => void }) {
             <a
               href="https://github.com/settings/tokens"
               target="_blank"
+              rel="noopener noreferrer"
               className="text-[10px] text-blue-500 hover:underline flex items-center gap-1"
             >
-              Create a token with 'repo' scope <ExternalLink size={10} />
+              Create a token with &apos;repo&apos; scope <ExternalLink size={10} />
             </a>
           </div>
 

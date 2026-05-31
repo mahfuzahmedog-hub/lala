@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useSettingsStore } from "@/lib/settings-store";
-import { X, Key, ExternalLink, Loader2, CheckCircle, Shield } from "lucide-react";
+import { X, ExternalLink, Loader2, CheckCircle, Shield } from "lucide-react";
 import { AIProvider } from "@/lib/ai/providers";
 
 export function AISettingsModal({ onClose }: { onClose: () => void }) {

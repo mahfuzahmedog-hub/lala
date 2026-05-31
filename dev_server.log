@@ -16,3 +16,4 @@
  POST /api/chat 200 in 355ms (next.js: 310ms, application-code: 45ms)
  GET / 200 in 1089ms (next.js: 251ms, application-code: 838ms)
  POST /api/chat 200 in 305ms (next.js: 264ms, application-code: 41ms)
+✓ Compiled in 1192ms
