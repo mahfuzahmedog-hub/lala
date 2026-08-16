@@ -24,6 +24,10 @@
 .DS_Store
 *.pem
 
+# ai-clipping-bot runtime data (persisted DB + object storage + rendered media)
+/.data/
+/scripts/.demo-workdir/
+
 # debug
 npm-debug.log*
 yarn-debug.log*
@@ -39,3 +43,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+/screenshots/
+server.log
+npm_install*.log

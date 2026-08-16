@@ -1,249 +1,73 @@
 "use client";
 
-import { useAppStore } from "@/lib/store";
-import { useState, useEffect } from "react";
-import { ChatSidebar } from "@/components/chat/ChatSidebar";
-import { EditorContainer } from "@/components/editor/EditorContainer";
-import { PreviewContainer } from "@/components/preview/PreviewContainer";
-import { GitHubSettingsModal } from "@/components/GitHubSettingsModal";
-import { AISettingsModal } from "@/components/AISettingsModal";
-import { ProjectDashboard } from "@/components/ProjectDashboard";
-import { ShipModal } from "@/components/ShipModal";
-import { AnalyticsModal } from "@/components/AnalyticsModal";
-import { FileExplorer } from "@/components/editor/FileExplorer";
-import { PanelLeft, PanelRight, Play, Github, Settings, Cloud, Loader2, CheckCircle2, AlertCircle, Sparkles, LayoutGrid, Rocket, BarChart3 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
+import { useFetch } from "@/lib/useFetch";
+import { Card, PageHeader, Skeleton, Stat, Badge, statusColor } from "@/components/ui";
+import { timeAgo } from "@/lib/utils";
+import type { Video } from "@/lib/clipping/types";
 
-export default function Home() {
-  const store = useAppStore();
-  const [mounted, setMounted] = useState(false);
+interface DashboardData {
+  projects: number;
+  videos: number;
+  clips: number;
+  acceptedClips: number;
+  rejectedClips: number;
+  activeJobs: number;
+  recentVideos: Video[];
+}
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const [showPreview, setShowPreview] = useState(true);
-  const [showChat, setShowChat] = useState(true);
-  const [showExplorer, setShowExplorer] = useState(true);
-  const [showGitHubModal, setShowGitHubModal] = useState(false);
-  const [showAIModal, setShowAIModal] = useState(false);
-  const [showDashboard, setShowDashboard] = useState(false);
-  const [showShipModal, setShowShipModal] = useState(false);
-  const [showAnalyticsModal, setShowAnalyticsModal] = useState(false);
-  const [pushStatus, setPushStatus] = useState<"idle" | "pushing" | "success" | "error">("idle");
-  const [errorMessage, setErrorMessage] = useState("");
-
-  const github = mounted ? store.github : { token: "", owner: "", repo: "", branch: "main" };
-  const files = mounted ? store.files : {};
-  const projectName = mounted ? store.projectName : "...";
-
-  const handlePush = async () => {
-    if (!github.token || !github.owner || !github.repo) {
-      setShowGitHubModal(true);
-      return;
-    }
-
-    setPushStatus("pushing");
-    try {
-      const res = await fetch("/api/github/push", {
-        method: "POST",
-        body: JSON.stringify({
-          ...github,
-          files,
-          message: `VibeCode Sync: ${new Date().toLocaleString()}`,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to push");
-
-      setPushStatus("success");
-      setTimeout(() => setPushStatus("idle"), 3000);
-    } catch (err: unknown) {
-      setPushStatus("error");
-      setErrorMessage(err instanceof Error ? err.message : "An unknown error occurred");
-      setTimeout(() => setPushStatus("idle"), 5000);
-    }
-  };
-
-  if (!mounted) return <div className="h-screen w-screen bg-[#050505]" />;
+export default function DashboardPage() {
+  const { data, loading } = useFetch<DashboardData>("/api/dashboard", 5000);
 
   return (
-    <main className="flex h-screen w-screen overflow-hidden bg-[#050505] text-gray-300 font-sans selection:bg-blue-500/30 text-[13px]">
-      {/* Sidebar - Chat */}
-      <AnimatePresence mode="popLayout">
-        {showChat && (
-          <motion.div
-            initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 400, opacity: 1 }}
-            exit={{ width: 0, opacity: 0 }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="h-full border-r border-[#1a1a1a] flex flex-col shrink-0 overflow-hidden shadow-2xl z-20"
-          >
-            <ChatSidebar />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 bg-[#050505]">
-        {/* Header/Toolbar */}
-        <header className="h-14 border-b border-[#1a1a1a] flex items-center justify-between px-6 bg-[#0a0a0a]/80 backdrop-blur-xl z-10 shrink-0">
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setShowChat(!showChat)}
-                className={`p-2 rounded-xl transition-all ${showChat ? "text-blue-400 bg-blue-400/10 shadow-inner" : "text-gray-500 hover:text-gray-300 hover:bg-[#111]"}`}
-              >
-                <PanelLeft size={18} />
-              </button>
-              <button
-                onClick={() => setShowDashboard(true)}
-                className="p-2 text-gray-500 hover:text-white hover:bg-[#111] rounded-xl transition-all"
-                title="Project Dashboard"
-              >
-                <LayoutGrid size={18} />
-              </button>
-              <button
-                onClick={() => setShowAnalyticsModal(true)}
-                className="p-2 text-gray-500 hover:text-emerald-400 hover:bg-[#111] rounded-xl transition-all"
-                title="Analytics"
-              >
-                <BarChart3 size={18} />
-              </button>
-            </div>
-
-            <div className="h-4 w-[1px] bg-[#1a1a1a]" />
-
-            <div className="flex items-center gap-3 group">
-              <div className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.4)] animate-pulse" />
-              <div className="flex flex-col">
-                <span className="text-[9px] font-black text-gray-600 uppercase tracking-widest leading-none mb-1">Environment</span>
-                <span className="text-[11px] font-black text-gray-200 group-hover:text-blue-400 transition-colors tracking-tighter uppercase italic">
-                  {projectName}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-             <div className="flex items-center bg-[#0d0d0d] rounded-xl p-1 border border-[#1a1a1a] shadow-inner font-black">
-               <button
-                  onClick={handlePush}
-                  disabled={pushStatus === "pushing"}
-                  className="flex items-center gap-2 px-4 py-1.5 bg-[#141414] hover:bg-[#1a1a1a] text-gray-300 hover:text-white rounded-lg text-[11px] font-bold transition-all shadow-sm active:scale-95 disabled:opacity-50"
-               >
-                  {pushStatus === "pushing" ? <Loader2 size={14} className="animate-spin text-blue-400" /> :
-                   pushStatus === "success" ? <CheckCircle2 size={14} className="text-green-400" /> :
-                   pushStatus === "error" ? <AlertCircle size={14} className="text-red-400" /> :
-                   <Cloud size={14} className="text-gray-400" />}
-                  {pushStatus === "error" ? "Error" : pushStatus === "success" ? "Synced" : "Cloud Sync"}
-               </button>
-               <button
-                onClick={() => setShowShipModal(true)}
-                className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-[11px] transition-all shadow-[0_0_20px_rgba(37,99,235,0.25)] ml-1 active:scale-95 uppercase tracking-tighter"
-               >
-                  <Rocket size={14} />
-                  Ship
-               </button>
-             </div>
-
-             <div className="h-4 w-[1px] bg-[#1a1a1a]" />
-
-             <div className="flex items-center gap-1.5">
-               <button
-                onClick={() => setShowAIModal(true)}
-                className="p-2 text-gray-500 hover:text-blue-400 hover:bg-blue-400/5 rounded-xl transition-all"
-                title="AI Settings"
-               >
-                  <Sparkles size={18} />
-               </button>
-               <button
-                onClick={() => setShowGitHubModal(true)}
-                className={`p-2 rounded-xl transition-all ${github.token ? "text-purple-400 bg-purple-400/5" : "text-gray-500"} hover:text-purple-300 hover:bg-purple-400/10`}
-                title="GitHub Settings"
-               >
-                  <Github size={18} />
-               </button>
-               <button className="p-2 text-gray-500 hover:text-gray-300 hover:bg-[#111] rounded-xl transition-all">
-                  <Settings size={18} />
-               </button>
-               <button
-                onClick={() => setShowPreview(!showPreview)}
-                className={`p-2 rounded-xl transition-all ${showPreview ? "text-blue-400 bg-blue-400/10 shadow-inner" : "text-gray-500 hover:text-gray-300 hover:bg-[#111]"}`}
-              >
-                <PanelRight size={18} />
-              </button>
-             </div>
-          </div>
-        </header>
-
-        {/* Editor & Preview Split */}
-        <div className="flex-1 flex min-h-0 bg-[#050505]">
-          <AnimatePresence>
-            {showExplorer && (
-                <motion.div
-                    initial={{ width: 0, opacity: 0 }}
-                    animate={{ width: 256, opacity: 1 }}
-                    exit={{ width: 0, opacity: 0 }}
-                    transition={{ type: "spring", damping: 30, stiffness: 300 }}
-                >
-                    <FileExplorer />
-                </motion.div>
-            )}
-          </AnimatePresence>
-
-          <div className="flex-1 min-w-0 flex flex-col">
-            <EditorContainer />
-          </div>
-
-          <AnimatePresence>
-            {showPreview && (
-              <motion.div
-                initial={{ width: 0, opacity: 0 }}
-                animate={{ width: "50%", opacity: 1 }}
-                exit={{ width: 0, opacity: 0 }}
-                transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                className="border-l border-[#1a1a1a] bg-[#050505] overflow-hidden shadow-2xl relative z-10"
-              >
-                 <PreviewContainer />
-              </motion.div>
-            )}
-          </AnimatePresence>
+    <div>
+      <PageHeader
+        title="Dashboard"
+        subtitle="Turn long-form video into high-quality short-form clips."
+      />
+      {loading && !data ? (
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-28" />
+          ))}
         </div>
-      </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <Stat label="Projects" value={data?.projects ?? 0} />
+            <Stat label="Videos" value={data?.videos ?? 0} />
+            <Stat label="Accepted clips" value={data?.acceptedClips ?? 0} />
+            <Stat label="Active jobs" value={data?.activeJobs ?? 0} />
+          </div>
 
-      <AnimatePresence>
-        {showGitHubModal && (
-          <GitHubSettingsModal onClose={() => setShowGitHubModal(false)} />
-        )}
-        {showAIModal && (
-          <AISettingsModal onClose={() => setShowAIModal(false)} />
-        )}
-        {showDashboard && (
-          <ProjectDashboard onClose={() => setShowDashboard(false)} />
-        )}
-        {showShipModal && (
-          <ShipModal onClose={() => setShowShipModal(false)} />
-        )}
-        {showAnalyticsModal && (
-          <AnalyticsModal onClose={() => setShowAnalyticsModal(false)} />
-        )}
-      </AnimatePresence>
-
-      {pushStatus === "error" && (
-        <div className="fixed bottom-6 right-6 bg-red-950/90 border border-red-500/50 p-4 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-2xl z-[100] max-w-sm animate-in slide-in-from-bottom-4 ring-1 ring-white/10">
-           <div className="flex gap-4">
-              <div className="p-2 bg-red-500/20 rounded-xl h-fit">
-                <AlertCircle size={20} className="text-red-400 shrink-0" />
-              </div>
-              <div>
-                <h4 className="text-[13px] font-black text-white leading-none uppercase tracking-widest">Sync Error</h4>
-                <p className="text-[11px] text-red-200/70 mt-3 leading-relaxed font-medium">{errorMessage}</p>
-              </div>
-           </div>
-        </div>
+          <h2 className="mb-3 mt-8 text-lg font-medium">Recent videos</h2>
+          {data && data.recentVideos.length > 0 ? (
+            <div className="space-y-2">
+              {data.recentVideos.map((v) => (
+                <Link key={v.id} href={`/processing?videoId=${v.id}`}>
+                  <Card className="flex items-center justify-between hover:border-white/20">
+                    <div>
+                      <p className="font-medium">{v.filename}</p>
+                      <p className="text-xs text-white/40">{timeAgo(v.createdAt)}</p>
+                    </div>
+                    <Badge color={statusColor(v.status)}>{v.status}</Badge>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <p className="text-white/60">
+                No videos yet. Head to{" "}
+                <Link href="/projects" className="text-indigo-300 underline">
+                  Projects
+                </Link>{" "}
+                to create one and add a sample video.
+              </p>
+            </Card>
+          )}
+        </>
       )}
-    </main>
+    </div>
   );
 }
